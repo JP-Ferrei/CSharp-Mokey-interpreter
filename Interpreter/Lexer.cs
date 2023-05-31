@@ -39,43 +39,13 @@ namespace Interpreter
         {
             SkipNextToken();
             if (IsLetter(Data))
-            {
-                var word = ReadIdentifier();
-                return new Token(Token.LookupIdent(word), word);
-            }
+                return ResolveLetter();
 
             if (IsDigit(Data))
-            {
-                return new Token(TokenType.INT, ReadNumber());
-            }
+                return ResolveNumber();
 
-            Token token;
-            if (CanBeDoubleOperator(Data))
-                token = ResolveDoubleOperators(Data);
-
-            else
-            {
-                token = Data switch
-                {
-                    '*' => new Token(TokenType.ASTERISK, Data),
-                    '+' => new Token(TokenType.PLUS, Data),
-                    '-' => new Token(TokenType.MINUS, Data),
-                    '/' => new Token(TokenType.SLASH, Data),
-                    '\\' => new Token(TokenType.BACKSLASH, Data),
-                    ';' => new Token(TokenType.SEMICOLON, Data),
-                    '(' => new Token(TokenType.LPAREN, Data),
-                    ')' => new Token(TokenType.RPAREN, Data),
-                    ',' => new Token(TokenType.COMMA, Data),
-                    '{' => new Token(TokenType.LBRACE, Data),
-                    '}' => new Token(TokenType.RBRACE, Data),
-                    _ => new Token(TokenType.EOF, ""),
-                };
-            }
-
-            ReadChar();
-            return token;
+            return ResolveOperators();
         }
-
 
         private void SkipNextToken()
         {
@@ -91,6 +61,14 @@ namespace Interpreter
 
         private bool IsDigit(char data) => '0' <= data && data <= '9';
 
+        private Token ResolveNumber() => new(TokenType.INT, ReadNumber());
+
+        private Token ResolveLetter()
+        {
+            var word = ReadIdentifier();
+            return new Token(Token.LookupIdent(word), word);
+        }
+
         private string ReadIdentifier()
         {
             var position = Position;
@@ -101,6 +79,18 @@ namespace Interpreter
             return Input[position..Position];
         }
 
+        private Token ResolveOperators()
+        {
+            Token token;
+            if (CanBeDoubleOperator(Data))
+                token = ResolveDoubleOperators(Data);
+            else
+                token = ResolveSingleOperators();
+
+            ReadChar();
+            return token;
+        }
+
         private string ReadNumber()
         {
             var position = Position;
@@ -109,6 +99,25 @@ namespace Interpreter
                 ReadChar();
             }
             return Input[position..Position];
+        }
+
+        private Token ResolveSingleOperators()
+        {
+            return Data switch
+            {
+                '*' => new Token(TokenType.ASTERISK, Data),
+                '+' => new Token(TokenType.PLUS, Data),
+                '-' => new Token(TokenType.MINUS, Data),
+                '/' => new Token(TokenType.SLASH, Data),
+                '\\' => new Token(TokenType.BACKSLASH, Data),
+                ';' => new Token(TokenType.SEMICOLON, Data),
+                '(' => new Token(TokenType.LPAREN, Data),
+                ')' => new Token(TokenType.RPAREN, Data),
+                ',' => new Token(TokenType.COMMA, Data),
+                '{' => new Token(TokenType.LBRACE, Data),
+                '}' => new Token(TokenType.RBRACE, Data),
+                _ => new Token(TokenType.EOF, ""),
+            };
         }
 
         private Token ResolveDoubleOperators(char data)

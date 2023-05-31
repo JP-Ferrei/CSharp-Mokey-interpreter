@@ -17,6 +17,10 @@ namespace Interpreter
         public TokenType TokenType { get; set; }
         public string Literal { get; set; }
 
+        public Token()
+        {
+        }
+
         public Token(TokenType tokenType, string literal)
         {
             TokenType = tokenType;
@@ -25,10 +29,6 @@ namespace Interpreter
 
         public Token(TokenType token, char literal) : this(token, literal.ToString()) { }
 
-        public Token()
-        {
-        }
-
         public static TokenType LookupIdent(string ident)
         {
             if (_keyWords.TryGetValue(ident, out TokenType token))
@@ -36,6 +36,8 @@ namespace Interpreter
 
             return TokenType.IDENT;
         }
+
+        public override string ToString() => string.Format("[ Type: {0}, Literal: {1} ]", TokenType.ToString(), Literal);
     }
 
     public enum TokenType

@@ -1,2 +1,6 @@
-﻿// See https://aka.ms/new-console-template for more information
-Console.WriteLine("Hello, World!");
+﻿
+using Interpreter;
+
+Console.WriteLine("Hello {0}! This is the Monkey programming language!\n", "dd");
+Console.WriteLine("Feel free to type in commands\n");
+RELP.Start();
