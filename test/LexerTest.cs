@@ -2,6 +2,7 @@ using Interpreter;
 
 namespace test
 {
+    [TestFixture]
     public class LexerTest
     {
 
