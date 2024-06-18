@@ -14,7 +14,7 @@ public static class RELP
 
         var lexer = new Lexer(input);
 
-        for (var token = lexer.NextToken(); token.TokenType != TokenType.EOF; token = lexer.NextToken())
+        foreach (var token in lexer.Iterate())
         {
             Console.WriteLine(token);
         }

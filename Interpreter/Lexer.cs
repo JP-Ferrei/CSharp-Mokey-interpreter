@@ -14,6 +14,15 @@ public class Lexer
         MoveFoward();
     }
 
+    public IEnumerable<Token> Iterate()
+    {
+        while (CanMoveFoward())
+        {
+            var token = NextToken();
+            yield return token;
+        }
+    }
+
     private void MoveFoward()
     {
         Data = PeekChar();
@@ -27,17 +36,17 @@ public class Lexer
 
     public Token NextToken()
     {
-        SkipNextToken();
+        SkipDeadChars();
 
         return Data switch
         {
-            var d when IsLetter(d) => ResolveLetter(),
-            var d when char.IsDigit(d) => ResolveNumber(),
-            _ => ResolveOperators(),
+            var d when IsLetter(d) => ReadIdentifier(),
+            var d when char.IsDigit(d) => ReadNumber(),
+            _ => ReadOperators(),
         };
     }
 
-    private void SkipNextToken()
+    private void SkipDeadChars()
     {
         while (Data is ' ' or '\t' or '\n' or '\r')
         {
@@ -47,49 +56,31 @@ public class Lexer
 
     private static bool IsLetter(char data) => char.IsLetter(data) || data == '_';
 
-    private Token ResolveNumber() => new(TokenType.INT, ReadNumber());
-
-    private string ReadNumber()
+    private Token ReadNumber()
     {
         var startPosition = Position;
         while (char.IsDigit(Data))
         {
             MoveFoward();
         }
-        return Input[startPosition..Position];
+        var number = Input[startPosition..Position];
+        return new(TokenType.INT, number);
     }
 
-    private Token ResolveLetter()
-    {
-        var word = ReadIdentifier();
-        return new Token(Token.LookupIdent(word), word);
-    }
-
-    private string ReadIdentifier()
+    private Token ReadIdentifier()
     {
         var position = Position;
         while (IsLetter(Data))
         {
             MoveFoward();
         }
-        return Input[position..Position];
+        var word = Input[position..Position];
+        return new Token(Token.LookupIdent(word), word);
     }
 
-    private Token ResolveOperators()
+    private Token ReadOperators()
     {
-        Token token = CanBeDoubleOperator(Data)
-            ? ResolveDoubleOperators(Data)
-            : ResolveSingleOperators();
-
-        MoveFoward();
-        return token;
-    }
-
-    private static bool CanBeDoubleOperator(char data) => data is '=' or '!' or '>' or '<';
-
-    private Token ResolveSingleOperators()
-    {
-        return Data switch
+        var token = Data switch
         {
             '*' => new Token(TokenType.ASTERISK, Data),
             '+' => new Token(TokenType.PLUS, Data),
@@ -102,29 +93,30 @@ public class Lexer
             ',' => new Token(TokenType.COMMA, Data),
             '{' => new Token(TokenType.LBRACE, Data),
             '}' => new Token(TokenType.RBRACE, Data),
+            '=' => PeekChar() switch
+            {
+                '=' => CreateToken(TokenType.EQ, Data),
+                _ => new Token(TokenType.ASSIGN, Data),
+            },
+            '!' => PeekChar() switch
+            {
+                '=' => CreateToken(TokenType.NOT_EQ, Data),
+                _ => new Token(TokenType.BANG, Data),
+            },
+            '>' => PeekChar() switch
+            {
+                '=' => CreateToken(TokenType.GT_EQ, Data),
+                _ => new Token(TokenType.GT, Data),
+            },
+            '<' => PeekChar() switch
+            {
+                '=' => CreateToken(TokenType.LT_EQ, Data),
+                _ => new Token(TokenType.LT, Data),
+            },
             _ => new Token(TokenType.EOF, ""),
         };
-    }
-
-    private Token ResolveDoubleOperators(char data)
-    {
-        return (data, PeekChar()) switch
-        {
-            ('=', '=') => CreateToken(TokenType.EQ, Data),
-            ('=', _) => CreateToken(TokenType.ASSIGN),
-            ('!', '=') => CreateToken(TokenType.NOT_EQ, Data),
-            ('!', _) => CreateToken(TokenType.BANG),
-            ('>', '=') => CreateToken(TokenType.GT_EQ, Data),
-            ('>', _) => CreateToken(TokenType.GT),
-            ('<', '=') => CreateToken(TokenType.LT_EQ, Data),
-            ('<', _) => CreateToken(TokenType.LT),
-            _ => CreateToken(TokenType.ILLEGAL)
-        };
-    }
-
-    private Token CreateToken(TokenType tokenType)
-    {
-        return new Token(tokenType, Data);
+        MoveFoward();
+        return token;
     }
 
     private Token CreateToken(TokenType tokenType, char data)
