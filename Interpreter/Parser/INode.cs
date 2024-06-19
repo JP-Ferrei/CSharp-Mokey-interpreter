@@ -7,10 +7,8 @@ public interface INode
 
 public interface IStatement : INode
 {
-    void StatementNode();
 }
 
 public interface IExpression : INode
 {
-    void ExpressionNode();
 }
