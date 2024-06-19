@@ -11,15 +11,10 @@ public class LetStatement : IStatement
 
     public string TokenLiteral => Token.Literal;
 
-    public void StatementNode()
-    {
-    }
-
-    public override string ToString()
-    {
-        return $"{Token.Literal} {Name} = {Value?.ToString() ?? string.Empty};";
-    }
+    public override string ToString() =>
+        $"{Token.Literal} {Name} = {Value?.ToString() ?? string.Empty};";
 }
+
 public class Identifier : IExpression
 {
     public Identifier() { }
@@ -35,12 +30,7 @@ public class Identifier : IExpression
 
     public string TokenLiteral => Token.Literal;
 
-    public void ExpressionNode() { }
-
-    public override string ToString()
-    {
-        return Value;
-    }
+    public override string ToString() => Value;
 }
 
 public class ReturnStatement : IStatement
@@ -50,12 +40,8 @@ public class ReturnStatement : IStatement
 
     public string TokenLiteral => Token.Literal;
 
-    public void StatementNode() { }
-
-    public override string ToString()
-    {
-        return $"{TokenLiteral} {ReturnExpression?.ToString() ?? string.Empty};";
-    }
+    public override string ToString() =>
+        $"{TokenLiteral} {ReturnExpression?.ToString() ?? string.Empty};";
 }
 
 public class ExpressionStatement : IStatement, IExpression
@@ -65,13 +51,36 @@ public class ExpressionStatement : IStatement, IExpression
 
     public string TokenLiteral => Token.Literal;
 
-    public void ExpressionNode() { }
+    public override string ToString() => Expression?.ToString() ?? string.Empty;
+}
 
-    public void StatementNode() { }
+public class IntegerLiteral : IExpression
+{
+    public Token Token { get; set; }
+    public int Value { get; init; }
 
-    public override string ToString()
-    {
-        return Expression?.ToString() ?? string.Empty;
+    public string TokenLiteral => Token.Literal;
 
-    }
+    public override string ToString() => Value.ToString();
+}
+
+public class PrefixExpression : IExpression
+{
+    public Token Token { get; set; }
+    public required string Operator { get; init; }
+    public IExpression? Right { get; set; }
+
+    public string TokenLiteral => Token.Literal;
+    public override string ToString() => $"({Operator}{Right})";
+}
+
+public class InfixExpression : IExpression
+{
+    public Token Token { get; set; }
+    public required string Operator { get; init; }
+    public IExpression? Left { get; set; }
+    public IExpression? Right { get; set; }
+
+    public string TokenLiteral => Token.Literal;
+    public override string ToString() => $"({Left} {Operator} {Right})";
 }
