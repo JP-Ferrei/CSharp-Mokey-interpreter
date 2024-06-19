@@ -25,7 +25,7 @@ namespace test
                 new(TokenType.RBRACE, "}"),
                 new(TokenType.COMMA, ","),
                 new(TokenType.SEMICOLON, ";"),
-                new(TokenType.EOF, ""),
+                new(TokenType.EOF, "EOF"),
             };
             AssertTokens(input, expectedTokens);
         }
@@ -79,7 +79,7 @@ namespace test
                 new(TokenType.IDENT, "ten"),
                 new(TokenType.RPAREN, ")"),
                 new(TokenType.SEMICOLON, ";"),
-                new(TokenType.EOF, ""),
+                new(TokenType.EOF, "EOF"),
             };
 
             AssertTokens(input, expectedTokens);
@@ -181,7 +181,7 @@ namespace test
                 new(TokenType.NOT_EQ, "!="),
                 new(TokenType.INT, "9"),
                 new(TokenType.SEMICOLON, ";"),
-                new(TokenType.EOF, ""),
+                new(TokenType.EOF, "EOF"),
             };
 
             AssertTokens(input, expectedTokens);
