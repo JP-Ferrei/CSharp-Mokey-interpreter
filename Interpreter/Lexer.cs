@@ -75,46 +75,70 @@ public class Lexer
             MoveFoward();
         }
         var word = Input[position..Position];
-        return new Token(Token.LookupIdent(word), word);
+
+        return word switch
+        {
+            "fn" => Token.FUNCTION,
+            "let" => Token.LET,
+            "true" => Token.TRUE,
+            "false" => Token.FALSE,
+            "if" => Token.IF,
+            "else" => Token.ELSE,
+            "return" => Token.RETURN,
+            _ => new Token(TokenType.IDENT, word)
+        };
     }
 
     private Token ReadOperators()
     {
         var token = Data switch
         {
-            '*' => new Token(TokenType.ASTERISK, Data),
-            '+' => new Token(TokenType.PLUS, Data),
-            '-' => new Token(TokenType.MINUS, Data),
-            '/' => new Token(TokenType.SLASH, Data),
-            '\\' => new Token(TokenType.BACKSLASH, Data),
-            ';' => new Token(TokenType.SEMICOLON, Data),
-            '(' => new Token(TokenType.LPAREN, Data),
-            ')' => new Token(TokenType.RPAREN, Data),
-            ',' => new Token(TokenType.COMMA, Data),
-            '{' => new Token(TokenType.LBRACE, Data),
-            '}' => new Token(TokenType.RBRACE, Data),
-            '=' => PeekChar() switch
-            {
-                '=' => CreateToken(TokenType.EQ, Data),
-                _ => new Token(TokenType.ASSIGN, Data),
-            },
-            '!' => PeekChar() switch
-            {
-                '=' => CreateToken(TokenType.NOT_EQ, Data),
-                _ => new Token(TokenType.BANG, Data),
-            },
-            '>' => PeekChar() switch
-            {
-                '=' => CreateToken(TokenType.GT_EQ, Data),
-                _ => new Token(TokenType.GT, Data),
-            },
-            '<' => PeekChar() switch
-            {
-                '=' => CreateToken(TokenType.LT_EQ, Data),
-                _ => new Token(TokenType.LT, Data),
-            },
-            _ => new Token(TokenType.EOF, ""),
+            '*' => Token.ASTERISK,
+            '+' => Token.PLUS,
+            '-' => Token.MINUS,
+            '/' => Token.SLASH,
+            '\\' => Token.BACKSLASH,
+            ';' => Token.SEMICOLON,
+            '(' => Token.LPAREN,
+            ')' => Token.RPAREN,
+            ',' => Token.COMMA,
+            '{' => Token.LBRACE,
+            '}' => Token.RBRACE,
+            '='
+                => PeekChar() switch
+                {
+                    '=' => Token.EQ,
+                    _ => Token.ASSIGN,
+                },
+            '!'
+                => PeekChar() switch
+                {
+                    '=' => Token.NOT_EQ,
+                    _ => Token.BANG,
+                },
+            '>'
+                => PeekChar() switch
+                {
+                    '=' => Token.GT_EQ,
+                    _ => Token.GT,
+                },
+            '<'
+                => PeekChar() switch
+                {
+                    '=' => Token.LT_EQ,
+                    _ => Token.LT,
+                },
+            _ => Token.EOF,
         };
+        if (
+            token.TokenType
+            is TokenType.EQ
+                or TokenType.NOT_EQ
+                or TokenType.GT_EQ
+                or TokenType.LT_EQ
+        )
+            MoveFoward();
+
         MoveFoward();
         return token;
     }
