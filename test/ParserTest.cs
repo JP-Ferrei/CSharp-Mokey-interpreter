@@ -7,53 +7,35 @@ namespace test;
 [TestFixture]
 public class ParserTest
 {
-    [Test]
-    public void TestLetStatements()
+    [TestCase("let x = 5;", "x", 5)]
+    [TestCase("let y = true;", "y", true)]
+    [TestCase("let foobar = y;", "foobar", "y")]
+    public void TestLetStatements(string input, string expectedIdentifier, object expectedValue)
     {
-        var input = """
-                let x = 5;
-                let y = 10;
-                let foobar = 838383;
-            """;
-
         var lexer = new Lexer(input);
         var parser = new MonkeyParser(lexer);
-
         var program = parser.ParserProgram();
 
-        var expectedIdentifiers = new List<string>() { "x", "y", "foobar" };
         Assert.Multiple(() =>
         {
             Assert.That(program, Is.Not.Null);
-            Assert.That(program.Statements, Has.Count.EqualTo(3));
-
-            for (int i = 0; i < program.Statements.Count; i++)
-            {
-                var expecetd = expectedIdentifiers[i];
-                var item = program.Statements[i];
-
-                Assert.That(item.TokenLiteral, Is.EqualTo("let"));
-                Assert.That(item, Is.TypeOf(typeof(LetStatement)));
-                if (item is LetStatement statement)
-                {
-                    Assert.That(statement.Name.Value, Is.EqualTo(expecetd));
-                    Assert.That(statement.Name.TokenLiteral, Is.EqualTo(expecetd));
-                }
-            }
-
+            Assert.That(program.Statements, Has.Count.EqualTo(1));
             CollectionAssert.IsEmpty(parser.Errors);
+
+            var item = program.Statements.First();
+
+            TestLetStatement(item, expectedIdentifier);
+            AssertExtensions.AssertReturnType(item, out LetStatement letStatement);
+            TestLiteralExpression(letStatement.Value, expectedValue);
+
         });
     }
 
-    [Test]
-    public void TestReturnStatements()
+    [TestCase("return 5;", 5)]
+    [TestCase("return 10;", 10)]
+    [TestCase("return true;", true)]
+    public void TestReturnStatements(string input, object expectedValue)
     {
-        var input = """
-                return 5;
-                return 10;
-                return 993322;
-            """;
-
         var lexer = new Lexer(input);
         var parser = new MonkeyParser(lexer);
 
@@ -62,17 +44,14 @@ public class ParserTest
         Assert.Multiple(() =>
         {
             Assert.That(program, Is.Not.Null);
-            Assert.That(program.Statements, Has.Count.EqualTo(3));
+            Assert.That(program.Statements, Has.Count.EqualTo(1));
             CollectionAssert.IsEmpty(parser.Errors);
 
-            for (int i = 0; i < program.Statements.Count; i++)
-            {
-                var item = program.Statements[i];
+            var item = program.Statements.First();
 
-                Assert.That(item.TokenLiteral, Is.EqualTo("return"));
-                Assert.That(item, Is.TypeOf(typeof(ReturnStatement)));
-                if (item is ReturnStatement statement) { }
-            }
+            Assert.That(item.TokenLiteral, Is.EqualTo("return"));
+            AssertExtensions.AssertReturnType(item, out ReturnStatement returnStatement);
+            TestLiteralExpression(returnStatement.ReturnExpression, expectedValue);
         });
     }
 
@@ -105,7 +84,6 @@ public class ParserTest
     [Test]
     public void TestIdentifierExpression()
     {
-
         var input = "foobar;";
 
         var lexer = new Lexer(input);
@@ -113,107 +91,109 @@ public class ParserTest
 
         var program = parser.ParserProgram();
         Assert.Multiple(() =>
-            {
-                Assert.That(program, Is.Not.Null);
-                Assert.That(program.Statements, Has.Count.EqualTo(1));
-                CollectionAssert.IsEmpty(parser.Errors);
-
-                for (int i = 0; i < program.Statements.Count; i++)
-                {
-                    var item = program.Statements[i];
-
-                    Assert.That(item, Is.TypeOf(typeof(ExpressionStatement)));
-                    if (item is ExpressionStatement statement)
-                    {
-                        if (statement.Expression is Identifier ident)
-                        {
-                            Assert.That(ident.Value, Is.EqualTo("foobar"));
-                            Assert.That(ident.TokenLiteral, Is.EqualTo("foobar"));
-                        }
-
-                    }
-                }
-            });
-    }
-
-    [Test]
-    public void TestIntegerLiteralExpression()
-    {
-        var input = "5;";
-        var lexer = new Lexer(input);
-        var parser = new MonkeyParser(lexer);
-
-        var program = parser.ParserProgram();
-        Assert.Multiple(() =>
-            {
-                Assert.That(program, Is.Not.Null);
-                Assert.That(program.Statements, Has.Count.EqualTo(1));
-                CollectionAssert.IsEmpty(parser.Errors);
-
-                for (int i = 0; i < program.Statements.Count; i++)
-                {
-                    var item = program.Statements[i];
-
-                    Assert.That(item, Is.TypeOf(typeof(ExpressionStatement)));
-                    if (item is ExpressionStatement statement)
-                    {
-                        if (statement.Expression is IntegerLiteral integerLiteral)
-                        {
-                            Assert.That(integerLiteral.Value, Is.EqualTo(5));
-                            Assert.That(integerLiteral.TokenLiteral, Is.EqualTo("5"));
-                        }
-
-                    }
-                }
-            });
-    }
-
-
-    [TestCase("!5;", "!", 5)]
-    [TestCase("-15", "-", 15)]
-    public void TestParsingPrefixExpressions(string input, string operatorValue, int integerValue)
-    {
-        var lexer = new Lexer(input);
-        var parser = new MonkeyParser(lexer);
-
-        var program = parser.ParserProgram();
-        Assert.Multiple(() =>
-            {
-                Assert.That(program, Is.Not.Null);
-                Assert.That(program.Statements, Has.Count.EqualTo(1));
-                CollectionAssert.IsEmpty(parser.Errors);
-
-                foreach (var item in program.Statements)
-                {
-                    Assert.That(item, Is.TypeOf(typeof(ExpressionStatement)));
-                    if (item is ExpressionStatement statement)
-                    {
-                        if (statement.Expression is PrefixExpression prefix)
-                        {
-                            Assert.That(prefix.Operator, Is.EqualTo(operatorValue));
-                            TestIntegerLiteral(prefix.Right, integerValue);
-                        }
-                    }
-                }
-            });
-
-    }
-
-    public void TestIntegerLiteral(IExpression? expression, int intValue)
-    {
-        Assert.Multiple(() =>
         {
+            Assert.That(program, Is.Not.Null);
+            Assert.That(program.Statements, Has.Count.EqualTo(1));
+            CollectionAssert.IsEmpty(parser.Errors);
 
-            Assert.That(expression, Is.Not.Null);
-            Assert.That(expression, Is.TypeOf(typeof(IntegerLiteral)));
-            if (expression is IntegerLiteral integerLiteral)
+            for (int i = 0; i < program.Statements.Count; i++)
             {
-                Assert.That(integerLiteral.Value, Is.EqualTo(intValue));
-                Assert.That(integerLiteral.TokenLiteral, Is.EqualTo(intValue.ToString()));
+                var item = program.Statements[i];
+
+                Assert.That(item, Is.TypeOf(typeof(ExpressionStatement)));
+                if (item is ExpressionStatement statement)
+                {
+                    if (statement.Expression is Identifier ident)
+                    {
+                        Assert.That(ident.Value, Is.EqualTo("foobar"));
+                        Assert.That(ident.TokenLiteral, Is.EqualTo("foobar"));
+                    }
+                }
             }
         });
     }
 
+    [TestCase("5;", 5)]
+    public void TestIntegerLiteralExpression(string input, int expected)
+    {
+        var lexer = new Lexer(input);
+        var parser = new MonkeyParser(lexer);
+
+        var program = parser.ParserProgram();
+        Assert.Multiple(() =>
+        {
+            Assert.That(program, Is.Not.Null);
+            Assert.That(program.Statements, Has.Count.EqualTo(1));
+            CollectionAssert.IsEmpty(parser.Errors);
+
+            foreach (var item in program.Statements)
+            {
+                Assert.That(item, Is.TypeOf(typeof(ExpressionStatement)));
+                if (item is ExpressionStatement statement)
+                {
+                    TestLiteralExpression(statement.Expression, expected);
+                }
+            }
+        });
+    }
+
+    [TestCase("true;", true)]
+    [TestCase("false;", false)]
+    // [TestCase("let foobar = true;", true)]
+    // [TestCase("let barfoo = false;", false)]
+    public void TestBooleanLiteralExpression(string input, bool expected)
+    {
+        var lexer = new Lexer(input);
+        var parser = new MonkeyParser(lexer);
+
+        var program = parser.ParserProgram();
+        Assert.Multiple(() =>
+        {
+            Assert.That(program, Is.Not.Null);
+            Assert.That(program.Statements, Has.Count.EqualTo(1));
+            CollectionAssert.IsEmpty(parser.Errors);
+
+            foreach (var item in program.Statements)
+            {
+                Assert.That(item, Is.TypeOf(typeof(ExpressionStatement)));
+                if (item is ExpressionStatement statement)
+                {
+                    TestLiteralExpression(statement.Expression, expected);
+                }
+            }
+        });
+    }
+
+    [TestCase("!5;", "!", 5)]
+    [TestCase("-15", "-", 15)]
+    [TestCase("!true;", "!", true)]
+    [TestCase("!false;", "!", false)]
+    public void TestParsingPrefixExpressions(string input, string operatorValue, object expected)
+    {
+        var lexer = new Lexer(input);
+        var parser = new MonkeyParser(lexer);
+
+        var program = parser.ParserProgram();
+        Assert.Multiple(() =>
+        {
+            Assert.That(program, Is.Not.Null);
+            Assert.That(program.Statements, Has.Count.EqualTo(1));
+            CollectionAssert.IsEmpty(parser.Errors);
+
+            foreach (var item in program.Statements)
+            {
+                Assert.That(item, Is.TypeOf(typeof(ExpressionStatement)));
+                if (item is ExpressionStatement statement)
+                {
+                    if (statement.Expression is PrefixExpression prefix)
+                    {
+                        Assert.That(prefix.Operator, Is.EqualTo(operatorValue));
+                        TestLiteralExpression(prefix.Right, expected);
+                    }
+                }
+            }
+        });
+    }
 
     [TestCase("5 + 5;", 5, "+", 5)]
     [TestCase("5 - 5;", 5, "-", 5)]
@@ -223,32 +203,353 @@ public class ParserTest
     [TestCase("5 < 5;", 5, "<", 5)]
     [TestCase("5 == 5;", 5, "==", 5)]
     [TestCase("5 != 5;", 5, "!=", 5)]
-    public void TestParsingInfixExpressions(string input, int leftValue, string operatorValue, int rightValue)
+    [TestCase("true == true", true, "==", true)]
+    [TestCase("true != false", true, "!=", false)]
+    [TestCase("false == false", false, "==", false)]
+    public void TestParsingInfixExpressions(
+        string input,
+        object leftValue,
+        string operatorValue,
+        object rightValue
+    )
     {
         var lexer = new Lexer(input);
         var parser = new MonkeyParser(lexer);
 
         var program = parser.ParserProgram();
         Assert.Multiple(() =>
-            {
-                Assert.That(program, Is.Not.Null);
-                Assert.That(program.Statements, Has.Count.EqualTo(1));
-                CollectionAssert.IsEmpty(parser.Errors);
+        {
+            Assert.That(program, Is.Not.Null);
+            Assert.That(program.Statements, Has.Count.EqualTo(1));
+            CollectionAssert.IsEmpty(parser.Errors);
 
-                foreach (var item in program.Statements)
+            foreach (var item in program.Statements)
+            {
+                Assert.That(item, Is.TypeOf(typeof(ExpressionStatement)));
+                if (item is ExpressionStatement statement)
                 {
-                    Assert.That(item, Is.TypeOf(typeof(ExpressionStatement)));
-                    if (item is ExpressionStatement statement)
-                    {
-                        if (statement.Expression is InfixExpression infix)
-                        {
-                            TestIntegerLiteral(infix.Left, leftValue);
-                            Assert.That(infix.Operator, Is.EqualTo(operatorValue));
-                            TestIntegerLiteral(infix.Right, rightValue);
-                        }
-                    }
+                    TestInfixExpression(statement.Expression, leftValue, operatorValue, rightValue);
                 }
-            });
+            }
+        });
+    }
+
+    [TestCase("1 + 2 + 3", "((1 + 2) + 3)")]
+    [TestCase("-a * b", "((-a) * b)")]
+    [TestCase("!-a", "(!(-a))")]
+    [TestCase("a + b + c", "((a + b) + c)")]
+    [TestCase("a + b - c", "((a + b) - c)")]
+    [TestCase("a * b * c", "((a * b) * c)")]
+    [TestCase("a * b / c", "((a * b) / c)")]
+    [TestCase("a + b / c", "(a + (b / c))")]
+    [TestCase("a + b * c + d / e - f", "(((a + (b * c)) + (d / e)) - f)")]
+    [TestCase("3 + 4; -5 * 5", "(3 + 4)((-5) * 5)")]
+    [TestCase("5 > 4 == 3 < 4", "((5 > 4) == (3 < 4))")]
+    [TestCase("5 < 4 != 3 > 4", "((5 < 4) != (3 > 4))")]
+    [TestCase("3 + 4 * 5 == 3 * 1 + 4 * 5", "((3 + (4 * 5)) == ((3 * 1) + (4 * 5)))")]
+    [TestCase("3 + 4 * 5 == 3 * 1 + 4 * 5", "((3 + (4 * 5)) == ((3 * 1) + (4 * 5)))")]
+    [TestCase("true", "true")]
+    [TestCase("false", "false")]
+    [TestCase("3 > 5 == false", "((3 > 5) == false)")]
+    [TestCase("3 < 5 == true", "((3 < 5) == true)")]
+    [TestCase("1 + (2 + 3) + 4", "((1 + (2 + 3)) + 4)")]
+    [TestCase("(5 + 5) * 2", "((5 + 5) * 2)")]
+    [TestCase("2 / (5 + 5)", "(2 / (5 + 5))")]
+    [TestCase("-(5 + 5)", "(-(5 + 5))")]
+    [TestCase("!(true == true)", "(!(true == true))")]
+    [TestCase("(5 + (5+2)) * 2", "((5 + (5 + 2)) * 2)")]
+    [TestCase("a + add(b * c) + d", "((a + add((b * c))) + d)")]
+    [TestCase("add(a, b, 1, 2 * 3, 4 + 5, add(6, 7 * 8))", "add(a, b, 1, (2 * 3), (4 + 5), add(6, (7 * 8)))")]
+    [TestCase("add(a + b + c * d / f + g)", "add((((a + b) + ((c * d) / f)) + g))")]
+    public void TestOperatorPrecedenceParsing(string input, string expected)
+    {
+        var lexer = new Lexer(input);
+        var parser = new MonkeyParser(lexer);
+
+        var program = parser.ParserProgram();
+        Assert.Multiple(() =>
+        {
+            Assert.That(program, Is.Not.Null);
+            Assert.That(program.ToString(), Is.EqualTo(expected));
+            CollectionAssert.IsEmpty(parser.Errors);
+        });
+    }
+
+    [TestCase("if (x < y) { x }")]
+    [TestCase("if (x < y) { x }")]
+    public void TestIfExpression(string input)
+    {
+        var lexer = new Lexer(input);
+        var parser = new MonkeyParser(lexer);
+
+        var program = parser.ParserProgram();
+        Assert.That(program, Is.Not.Null);
+        Assert.That(program.Statements, Has.Count.EqualTo(1));
+        CollectionAssert.IsEmpty(parser.Errors);
+
+        foreach (var item in program.Statements)
+        {
+            AssertExtensions.AssertReturnType(item, out ExpressionStatement statement);
+            AssertExtensions.AssertReturnType(statement.Expression, out IfExpression ifExpression);
+            Assert.That(
+                TestInfixExpression(ifExpression.Condition, "x", "<", "y"),
+                Is.True
+            );
+            Assert.That(ifExpression.Consequence.Statements, Has.Count.EqualTo(1));
+
+            AssertExtensions.AssertReturnType(ifExpression.Consequence.Statements.First(), out ExpressionStatement firtsExpressionStatement);
+            AssertExtensions.AssertReturnType(firtsExpressionStatement.Expression, out IExpression firtsExpression);
+            Assert.That(TestIdentifier(firtsExpression, "x"), Is.True);
+            Assert.That(ifExpression.Alternative, Is.Null);
+        }
+    }
+    [TestCase("if (x < y) { x } else { y }")]
+    public void TestIfElseExpression(string input)
+    {
+        var lexer = new Lexer(input);
+        var parser = new MonkeyParser(lexer);
+
+        var program = parser.ParserProgram();
+        Assert.That(program, Is.Not.Null);
+        Assert.That(program.Statements, Has.Count.EqualTo(1));
+        CollectionAssert.IsEmpty(parser.Errors);
+
+        foreach (var item in program.Statements)
+        {
+            AssertExtensions.AssertReturnType(item, out ExpressionStatement statement);
+            AssertExtensions.AssertReturnType(statement.Expression, out IfExpression ifExpression);
+            Assert.That(
+                TestInfixExpression(ifExpression.Condition, "x", "<", "y"),
+                Is.True
+            );
+            Assert.That(ifExpression.Consequence.Statements, Has.Count.EqualTo(1));
+
+            AssertExtensions.AssertReturnType(ifExpression.Consequence.Statements.First(), out ExpressionStatement firtsExpressionStatement);
+            AssertExtensions.AssertReturnType(firtsExpressionStatement.Expression, out IExpression firtsExpression);
+            Assert.That(TestIdentifier(firtsExpression, "x"), Is.True);
+            Assert.That(ifExpression.Alternative, Is.Not.Null);
+
+            Assert.That(ifExpression.Consequence.Statements, Has.Count.EqualTo(1));
+
+            AssertExtensions.AssertReturnType(ifExpression.Alternative.Statements.First(), out ExpressionStatement firtsAlternativeExpressionStatement);
+            AssertExtensions.AssertReturnType(firtsAlternativeExpressionStatement.Expression, out IExpression firtsAlternativeExpression);
+            Assert.That(TestIdentifier(firtsAlternativeExpression, "y"), Is.True);
+        }
+    }
+
+
+    [TestCase("fn(x, y) { x + y; }", "x", "y")]
+    [TestCase("fn() { x + y; }")]
+    public void TestFunctionLiteralParsing(string input, params string[] parameters)
+    {
+        var lexer = new Lexer(input);
+        var parser = new MonkeyParser(lexer);
+
+        var program = parser.ParserProgram();
+        Assert.That(program, Is.Not.Null);
+        Assert.That(program.Statements, Has.Count.EqualTo(1));
+        CollectionAssert.IsEmpty(parser.Errors);
+
+        var first = program.Statements.First();
+        AssertExtensions.AssertReturnType(first, out ExpressionStatement statement);
+        AssertExtensions.AssertReturnType(statement.Expression, out FunctionLiteral functionLiteral);
+
+        Assert.That(functionLiteral.Parameters, Has.Count.EqualTo(parameters.Length));
+        for (int i = 0; i < parameters.Length; i++)
+        {
+            TestLiteralExpression(functionLiteral.Parameters[i], parameters[i]);
+        }
+
+        Assert.That(functionLiteral.Body.Statements, Has.Count.EqualTo(1));
+        AssertExtensions.AssertReturnType(functionLiteral.Body.Statements[0], out ExpressionStatement bodyStatement);
+        AssertExtensions.AssertReturnType(bodyStatement.Expression, out IExpression bodyExpression);
+        TestInfixExpression(bodyExpression, "x", "+", "y");
+    }
+    [TestCase("fn() {};")]
+    [TestCase("fn(x) {};", "x")]
+    [TestCase("fn(x, y, z) {};", "x", "y", "z")]
+    public void TestFunctionLiteralParsingWithEmptyBody(string input, params string[] parameters)
+    {
+        var lexer = new Lexer(input);
+        var parser = new MonkeyParser(lexer);
+
+        var program = parser.ParserProgram();
+        Assert.That(program, Is.Not.Null);
+        Assert.That(program.Statements, Has.Count.EqualTo(1));
+        CollectionAssert.IsEmpty(parser.Errors);
+
+        var first = program.Statements.First();
+        AssertExtensions.AssertReturnType(first, out ExpressionStatement statement);
+        AssertExtensions.AssertReturnType(statement.Expression, out FunctionLiteral functionLiteral);
+
+        Assert.That(functionLiteral.Parameters, Has.Count.EqualTo(parameters.Length));
+        for (int i = 0; i < parameters.Length; i++)
+        {
+            TestLiteralExpression(functionLiteral.Parameters[i], parameters[i]);
+        }
+    }
+    [TestCase("add(1, 2 * 3, 4 + 5)")]
+    public void TestCallExpressionParsing(string input)
+    {
+        var lexer = new Lexer(input);
+        var parser = new MonkeyParser(lexer);
+
+        var program = parser.ParserProgram();
+        Assert.That(program, Is.Not.Null);
+        Assert.That(program.Statements, Has.Count.EqualTo(1));
+        CollectionAssert.IsEmpty(parser.Errors);
+
+        var first = program.Statements.First();
+        AssertExtensions.AssertReturnType(first, out ExpressionStatement statement);
+        AssertExtensions.AssertReturnType(statement.Expression, out CallExpression callExpression);
+
+        TestIdentifier(callExpression.Function, "add");
+        Assert.That(callExpression.Arguments, Has.Count.EqualTo(3));
+        TestLiteralExpression(callExpression.Arguments[0], 1);
+        TestInfixExpression(callExpression.Arguments[1], 2, "*", 3);
+        TestInfixExpression(callExpression.Arguments[2], 4, "+", 5);
 
     }
+    #region Assertions
+
+    public bool TestLetStatement(IStatement statement, string name)
+    {
+        try
+        {
+
+            Assert.That(statement.TokenLiteral, Is.EqualTo("let"));
+            Assert.That(statement, Is.TypeOf(typeof(LetStatement)));
+            if (statement is LetStatement letStatement)
+            {
+                Assert.That(letStatement.Name.Value, Is.EqualTo(name));
+                Assert.That(letStatement.Name.TokenLiteral, Is.EqualTo(name));
+            }
+
+            return true;
+        }
+        catch (Exception)
+        {
+            return false;
+        }
+    }
+    public bool TestLiteralExpression(IExpression? expression, object expected)
+    {
+        try
+        {
+            Assert.That(expression, Is.Not.Null);
+            return expected switch
+            {
+                int d => TestIntegerLiteral(expression, d),
+                string d => TestIdentifier(expression, d),
+                bool d => TestBooleanLiteral(expression, d),
+                _
+                    => throw new Exception(
+                        $"type of expression not handled. got {expected.GetType()}"
+                    )
+            };
+        }
+        catch (Exception)
+        {
+            return false;
+        }
+    }
+
+    public bool TestIntegerLiteral(IExpression? expression, int intValue)
+    {
+        try
+        {
+            Assert.Multiple(() =>
+            {
+                Assert.That(expression, Is.Not.Null);
+                Assert.That(expression, Is.TypeOf(typeof(IntegerLiteral)));
+                if (expression is IntegerLiteral integerLiteral)
+                {
+                    Assert.That(integerLiteral.Value, Is.EqualTo(intValue));
+                    Assert.That(integerLiteral.TokenLiteral, Is.EqualTo(intValue.ToString()));
+                }
+            });
+            return true;
+        }
+        catch (Exception)
+        {
+            return false;
+        }
+    }
+
+    public bool TestBooleanLiteral(IExpression? expression, bool boolValue)
+    {
+        try
+        {
+            Assert.Multiple(() =>
+            {
+                Assert.That(expression, Is.Not.Null);
+                Assert.That(expression, Is.TypeOf(typeof(BooleanLiteral)));
+                if (expression is BooleanLiteral booleanLiteral)
+                {
+                    Assert.That(booleanLiteral.Value, Is.EqualTo(boolValue));
+                    Assert.That(
+                        booleanLiteral.TokenLiteral,
+                        Is.EqualTo(boolValue.ToString().ToLower())
+                    );
+                }
+            });
+            return true;
+        }
+        catch (Exception)
+        {
+            return false;
+        }
+    }
+
+    public bool TestIdentifier(IExpression? expression, string value)
+    {
+        try
+        {
+            Assert.Multiple(() =>
+            {
+                Assert.That(expression, Is.Not.Null);
+                Assert.That(expression, Is.TypeOf(typeof(Identifier)));
+                if (expression is Identifier identifier)
+                {
+                    Assert.That(identifier.Value, Is.EqualTo(value));
+                    Assert.That(identifier.TokenLiteral, Is.EqualTo(value));
+                }
+            });
+            return true;
+        }
+        catch (Exception ex)
+        {
+            System.Console.WriteLine(ex);
+            return false;
+        }
+    }
+
+    public bool TestInfixExpression(
+        IExpression? expression,
+        object left,
+        string operatorValue,
+        object right
+    )
+    {
+        try
+        {
+            Assert.Multiple(() =>
+            {
+                Assert.That(expression, Is.Not.Null);
+                Assert.That(expression, Is.TypeOf(typeof(InfixExpression)));
+                if (expression is InfixExpression infix)
+                {
+                    TestLiteralExpression(infix.Left, left);
+                    Assert.That(infix.Operator, Is.EqualTo(operatorValue));
+                    TestLiteralExpression(infix.Right, right);
+                }
+            });
+            return true;
+        }
+        catch (Exception)
+        {
+            return false;
+        }
+    }
+    #endregion
 }

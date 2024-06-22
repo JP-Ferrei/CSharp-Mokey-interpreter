@@ -27,6 +27,7 @@ public struct Token
     public static bool operator !=(Token left, TokenType right) => left.TokenType != right;
     public static Token ILLEGAL => new(TokenType.ILLEGAL, "ILLEGAL");
     public static Token EOF => new(TokenType.EOF, "EOF");
+    public static Token IDENT => new(TokenType.IDENT, "");
 
     public static Token COMMA => new(TokenType.COMMA, ",");
     public static Token SEMICOLON => new(TokenType.SEMICOLON, ";");
