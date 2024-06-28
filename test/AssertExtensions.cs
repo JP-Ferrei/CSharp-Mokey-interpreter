@@ -4,7 +4,6 @@ namespace test;
 
 public static class AssertExtensions
 {
-
     // public static R AssertAndReturnType<T, R>(T actual, Type expression)
     // {
     //     ArgumentNullException.ThrowIfNull(actual);
@@ -17,7 +16,8 @@ public static class AssertExtensions
     //     }
 
     // }
-    public static void AssertReturnType<T, R>(T? actual, out R value) where T : class
+    public static void AssertReturnType<T, R>(T? actual, out R value)
+        where T : class
     {
         Assert.That(actual, Is.Not.Null);
         if (actual is R a)
@@ -26,13 +26,5 @@ public static class AssertExtensions
         {
             throw new Exception();
         }
-
     }
-
-    public static void AssertType<T, R>(T? actual)
-    {
-
-
-    }
-
 }

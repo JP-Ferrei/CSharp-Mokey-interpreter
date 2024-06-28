@@ -2,6 +2,7 @@
 using Interpreter.Evaluation;
 using Interpreter.Lexer;
 using Interpreter.Parser;
+using Environment = Interpreter.Evaluation.Environment;
 
 namespace Interpreter;
 
@@ -26,6 +27,7 @@ public static class RELP
 
     public static void Start()
     {
+        var environment = new Environment();
         while (true)
         {
             var input = Console.ReadLine();
@@ -44,7 +46,8 @@ public static class RELP
                 PrintParserErros(parser.Errors);
             }
 
-            var evaluatedValue = Evaluator.Eval(program);
+            var evaluatedValue = Evaluator.Eval(program, environment);
+            System.Console.WriteLine(evaluatedValue);
         }
     }
 

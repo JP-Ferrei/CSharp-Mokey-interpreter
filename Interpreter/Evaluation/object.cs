@@ -8,6 +8,7 @@ public enum Objects
     BooleanObject,
     NullObject,
     ReturnObject,
+    FunctionObject
 }
 
 public interface IObject
@@ -111,4 +112,23 @@ public class ReturnObject : IObject
     public string Inspect() => Value?.ToString() ?? "";
 
     public string Type() => Objects.ReturnObject.ToString();
+}
+
+public class FunctionObject : IObject
+{
+    public required List<Identifier> Parameters { get; set; } = [];
+    public required BlockStatement Body { get; set; }
+    public required Environment Environment { get; init; }
+
+    public FunctionObject() { }
+
+    public FunctionObject(Environment environment)
+    {
+        Environment = environment;
+    }
+
+    public string Inspect() =>
+        $"({string.Join(", ", Parameters.Select(it => it.ToString()))}) {Body}";
+
+    public string Type() => Objects.FunctionObject.ToString();
 }

@@ -2,12 +2,23 @@ using Interpreter.Evaluation;
 using Interpreter.Exceptions;
 using Interpreter.Lexer;
 using Interpreter.Parser;
+using Environment = Interpreter.Evaluation.Environment;
 
 namespace test;
 
 [TestFixture]
 public class EvaluatorTests
 {
+    [TestCase("let a = 5; a;", 5)]
+    [TestCase("let a = 5 * 5; a;", 25)]
+    [TestCase("let a = 5; let b = a; b;", 5)]
+    [TestCase("let a = 5; let b = a; let c = a + b + 5; c;", 15)]
+    public void TestLetStatements(string input, int expected)
+    {
+        var evaluated = TestEval(input);
+        TestIntegerObject(evaluated, expected);
+    }
+
     [TestCase("5", 5)]
     [TestCase("10", 10)]
     [TestCase("-5", -5)]
@@ -94,6 +105,19 @@ public class EvaluatorTests
         TestIntegerObject(evaluated, expected);
     }
 
+    [TestCase("fn(x) { x + 2; };")]
+    public void TestReturnExpressions(string input)
+    {
+        var evaluated = TestEval(input);
+        AssertExtensions.AssertReturnType(evaluated, out FunctionObject fn);
+
+        Assert.That(fn.Parameters.Count, Is.EqualTo(1));
+        Assert.That(fn.Parameters[0].ToString(), Is.EqualTo("x"));
+
+        var expectedBody = "(x + 2)";
+        Assert.That(fn.Body.ToString(), Is.EqualTo(expectedBody));
+    }
+
     [TestCase("5 + true;", typeof(TypeMissMatchException), "type mismatch: INTEGER + BOOLEAN")]
     [TestCase("5 + true; 5;", typeof(TypeMissMatchException), "type mismatch: INTEGER + BOOLEAN")]
     [TestCase("-true", typeof(UnkwownOperatorException), "unknown operator: -BOOLEAN")]
@@ -122,6 +146,7 @@ public class EvaluatorTests
         typeof(UnkwownOperatorException),
         "unknown operator: BOOLEAN + BOOLEAN"
     )]
+    [TestCase("foobar", typeof(IdenfierNotFoundException), "identifier not found: foobar")]
     public void TestErrorHandling(string input, Type exceptionType, string errorMessage)
     {
         Assert.Throws(
@@ -139,8 +164,9 @@ public class EvaluatorTests
         var lexer = new MonkeyLexer(input);
         var parser = new MonkeyParser(lexer);
         var program = parser.ParserProgram();
+        var env = new Environment();
 
-        return Evaluator.Eval(program);
+        return Evaluator.Eval(program, env);
     }
 
     private bool TestIntegerObject(object evaluated, int expected)
