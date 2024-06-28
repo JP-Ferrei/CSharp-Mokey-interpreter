@@ -1,4 +1,5 @@
 using Interpreter.Evaluation;
+using Interpreter.Exceptions;
 using Interpreter.Lexer;
 using Interpreter.Parser;
 
@@ -91,6 +92,46 @@ public class EvaluatorTests
     {
         var evaluated = TestEval(input);
         TestIntegerObject(evaluated, expected);
+    }
+
+    [TestCase("5 + true;", typeof(TypeMissMatchException), "type mismatch: INTEGER + BOOLEAN")]
+    [TestCase("5 + true; 5;", typeof(TypeMissMatchException), "type mismatch: INTEGER + BOOLEAN")]
+    [TestCase("-true", typeof(UnkwownOperatorException), "unknown operator: -BOOLEAN")]
+    [TestCase(
+        "true + false;",
+        typeof(UnkwownOperatorException),
+        "unknown operator: BOOLEAN + BOOLEAN"
+    )]
+    [TestCase(
+        "5; true + false; 5",
+        typeof(UnkwownOperatorException),
+        "unknown operator: BOOLEAN + BOOLEAN"
+    )]
+    [TestCase(
+        "if (10 > 1) { true + false; }",
+        typeof(UnkwownOperatorException),
+        "unknown operator: BOOLEAN + BOOLEAN"
+    )]
+    [TestCase(
+        "if (10 > 1) { true + false; }",
+        typeof(UnkwownOperatorException),
+        "unknown operator: BOOLEAN + BOOLEAN"
+    )]
+    [TestCase(
+        "if (10 > 1) { if (10 > 1) { return true + false; } return 1; }",
+        typeof(UnkwownOperatorException),
+        "unknown operator: BOOLEAN + BOOLEAN"
+    )]
+    public void TestErrorHandling(string input, Type exceptionType, string errorMessage)
+    {
+        Assert.Throws(
+            exceptionType,
+            () =>
+            {
+                TestEval(input);
+            },
+            errorMessage
+        );
     }
 
     public IObject TestEval(string input)

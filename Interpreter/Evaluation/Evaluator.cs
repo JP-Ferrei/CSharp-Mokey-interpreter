@@ -1,3 +1,4 @@
+using Interpreter.Exceptions;
 using Interpreter.Parser;
 using Interpreter.Parser.Parser;
 
@@ -57,6 +58,10 @@ public class Evaluator
 
     private static IObject? EvalInfixExpression(string @operator, IObject? left, IObject? right)
     {
+        ArgumentNullException.ThrowIfNull(@operator);
+        ArgumentNullException.ThrowIfNull(left);
+        ArgumentNullException.ThrowIfNull(right);
+
         Console.WriteLine($"operator: {@operator}, left: {left}, right: {right}");
         return (@operator, left, right) switch
         {
@@ -66,7 +71,18 @@ public class Evaluator
                 => BooleanObject.NativeBoolToBoolean(l.Value == r.Value),
             ("!=", BooleanObject l, BooleanObject r)
                 => BooleanObject.NativeBoolToBoolean(l.Value != r.Value),
-            _ => null,
+            (var o, var l, var r) when l.Type() != r.Type()
+                => throw new TypeMissMatchException(
+                    @operator: o.ToString(),
+                    leftValue: l!,
+                    rightValue: r!
+                ),
+            (var o, var l, var r)
+                => throw new UnkwownOperatorException(
+                    @operator: o.ToString(),
+                    leftValue: l!,
+                    rightValue: r!
+                ),
         };
     }
 
@@ -86,7 +102,12 @@ public class Evaluator
             ">" => BooleanObject.NativeBoolToBoolean(left.Value > right.Value),
             "==" => BooleanObject.NativeBoolToBoolean(left.Value == right.Value),
             "!=" => BooleanObject.NativeBoolToBoolean(left.Value != right.Value),
-            _ => NullObject.Instance,
+            var o
+                => throw new UnkwownOperatorException(
+                    @operator: o.ToString(),
+                    leftValue: left,
+                    rightValue: right
+                ),
         };
     }
 
@@ -95,22 +116,25 @@ public class Evaluator
 
     private static IObject? EvalPrefixExpression(string operatorValue, IObject? right)
     {
+        ArgumentNullException.ThrowIfNull(right);
         return operatorValue switch
         {
             "!" => EvalBangOperatorExpression(right),
             "-" => EvalMinusPrefixOperatorExpression(right),
-            _ => null,
+            _ => throw new UnkwownOperatorException(operatorValue, right)
         };
     }
 
     private static IObject? EvalMinusPrefixOperatorExpression(IObject? right)
     {
+        ArgumentNullException.ThrowIfNull(right);
+
         if (right is not null and IntegerObject integer)
         {
             return new IntegerObject(-integer.Value);
         }
 
-        return null;
+        throw new UnkwownOperatorException(right!);
     }
 
     private static IObject EvalBangOperatorExpression(IObject? right)
