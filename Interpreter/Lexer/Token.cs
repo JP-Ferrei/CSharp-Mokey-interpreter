@@ -1,6 +1,4 @@
-using System.Reflection.Metadata.Ecma335;
-
-namespace Interpreter;
+namespace Interpreter.Lexer;
 
 public struct Token
 {
@@ -13,18 +11,21 @@ public struct Token
         Literal = literal;
     }
 
-    public Token(TokenType token, char literal) : this(token, literal.ToString()) { }
+    public Token(TokenType token, char literal)
+        : this(token, literal.ToString()) { }
 
     public bool IsTypeEqual(TokenType type)
     {
         return TokenType == type;
     }
 
-    public override string ToString() => string.Format("[ Type: {0}, Literal: {1} ]", TokenType.ToString(), Literal);
-
+    public override string ToString() =>
+        string.Format("[ Type: {0}, Literal: {1} ]", TokenType.ToString(), Literal);
 
     public static bool operator ==(Token left, TokenType right) => left.TokenType == right;
+
     public static bool operator !=(Token left, TokenType right) => left.TokenType != right;
+
     public static Token ILLEGAL => new(TokenType.ILLEGAL, "ILLEGAL");
     public static Token EOF => new(TokenType.EOF, "EOF");
     public static Token IDENT => new(TokenType.IDENT, "");
@@ -63,9 +64,11 @@ public enum TokenType
 {
     ILLEGAL,
     EOF,
+
     //Identifiers
     INT,
     IDENT,
+
     //Delimiters
     COMMA,
     SEMICOLON,
@@ -73,6 +76,7 @@ public enum TokenType
     RPAREN,
     LBRACE,
     RBRACE,
+
     //Operators
     ASSIGN,
     PLUS,
@@ -87,6 +91,7 @@ public enum TokenType
     GT,
     LT_EQ,
     GT_EQ,
+
     //keywords
     FUNCTION,
     LET,

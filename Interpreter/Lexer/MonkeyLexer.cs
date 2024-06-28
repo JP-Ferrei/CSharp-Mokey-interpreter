@@ -1,6 +1,6 @@
-namespace Interpreter;
+namespace Interpreter.Lexer;
 
-public class Lexer
+public class MonkeyLexer
 {
     private const char END_OF_FILE = '\0';
     public string Input { get; private set; }
@@ -8,7 +8,7 @@ public class Lexer
     public int ReadPosition { get; private set; } = 0;
     public char Data { get; private set; }
 
-    public Lexer(string input)
+    public MonkeyLexer(string input)
     {
         Input = input;
         MoveFoward();

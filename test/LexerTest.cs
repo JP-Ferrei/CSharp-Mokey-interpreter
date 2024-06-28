@@ -1,15 +1,12 @@
-using Interpreter;
+using Interpreter.Lexer;
 
 namespace test
 {
     [TestFixture]
     public class LexerTest
     {
-
         [SetUp]
-        public void Setup()
-        {
-        }
+        public void Setup() { }
 
         [Test]
         public void ShouldReadAllNonLettersCharactersCorrectly()
@@ -34,13 +31,13 @@ namespace test
         public void ShouldReadAllCharactersCorrectly()
         {
             var input = """
-                let five = 5;
-                let ten = 10;
-                let add = fn(x, y) {
-                    x + y;
-                };
-                let result = add(five, ten);
-            """;
+                    let five = 5;
+                    let ten = 10;
+                    let add = fn(x, y) {
+                        x + y;
+                    };
+                    let result = add(five, ten);
+                """;
             var expectedTokens = new List<Token>
             {
                 new(TokenType.LET, "let"),
@@ -89,23 +86,23 @@ namespace test
         public void test3()
         {
             var input = """
-                    let five = 5;
-                    let ten = 10;
-                    let add = fn(x, y) {
-                        x + y;
-                    };
-                    let result = add(five, ten);
-                    !-/*5;
-                    5 < 10 > 5;
+                let five = 5;
+                let ten = 10;
+                let add = fn(x, y) {
+                    x + y;
+                };
+                let result = add(five, ten);
+                !-/*5;
+                5 < 10 > 5;
 
-                    if (5 < 10) {
-                    return true;
-                    } else {
-                    return false;
-                    }
-                    10 == 10;
-                    10 != 9;
-                    """;
+                if (5 < 10) {
+                return true;
+                } else {
+                return false;
+                }
+                10 == 10;
+                10 != 9;
+                """;
             var expectedTokens = new List<Token>
             {
                 new(TokenType.LET, "let"),
@@ -189,7 +186,7 @@ namespace test
 
         private void AssertTokens(string input, IEnumerable<Token> expectedTokens)
         {
-            var lexer = new Lexer(input);
+            var lexer = new MonkeyLexer(input);
             foreach (var expectedToken in expectedTokens)
             {
                 Token token = lexer.NextToken();
@@ -199,7 +196,6 @@ namespace test
                     Assert.That(token.Literal, Is.EqualTo(expectedToken.Literal));
                 });
             }
-
         }
     }
 }

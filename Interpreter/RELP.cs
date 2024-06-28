@@ -1,4 +1,6 @@
 ﻿using System.Text;
+using Interpreter.Evaluation;
+using Interpreter.Lexer;
 using Interpreter.Parser;
 
 namespace Interpreter;
@@ -19,17 +21,13 @@ public static class RELP
         sb.AppendLine("""      \   \ '~' /   /""");
         sb.AppendLine("""       '._ '-=-' _.'""");
         sb.AppendLine("""          '-----'""");
-
         return sb.ToString();
     }
-
-
 
     public static void Start()
     {
         while (true)
         {
-
             var input = Console.ReadLine();
             if (string.IsNullOrEmpty(input))
             {
@@ -37,7 +35,7 @@ public static class RELP
                 return;
             }
 
-            var lexer = new Lexer(input);
+            var lexer = new MonkeyLexer(input);
             var parser = new MonkeyParser(lexer);
             var program = parser.ParserProgram();
 
@@ -46,10 +44,7 @@ public static class RELP
                 PrintParserErros(parser.Errors);
             }
 
-            foreach (var statement in program.Statements)
-            {
-                Console.WriteLine(statement);
-            }
+            var evaluatedValue = Evaluator.Eval(program);
         }
     }
 

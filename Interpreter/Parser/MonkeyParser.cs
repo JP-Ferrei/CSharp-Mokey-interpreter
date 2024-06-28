@@ -1,4 +1,5 @@
-﻿using Interpreter.Parser.Parser;
+﻿using Interpreter.Lexer;
+using Interpreter.Parser.Parser;
 
 namespace Interpreter.Parser;
 
@@ -34,7 +35,7 @@ public class MonkeyParser
     {
         get => _errors;
     }
-    private readonly Lexer _lexer;
+    private readonly MonkeyLexer _lexer;
     private Token _currentToken;
     private Token _peekToken;
 
@@ -42,7 +43,7 @@ public class MonkeyParser
     public Dictionary<TokenType, Func<IExpression, IExpression>> InfixParseFuncs { get; init; } =
         [];
 
-    public MonkeyParser(Lexer lexer)
+    public MonkeyParser(MonkeyLexer lexer)
     {
         _lexer = lexer;
         _errors = [];
@@ -127,7 +128,9 @@ public class MonkeyParser
     }
 
     private void PeekError(Token tokenType) =>
-        _errors.Add($"expected next token to be {tokenType.Literal}, got {_peekToken.TokenType} instead");
+        _errors.Add(
+            $"expected next token to be {tokenType.Literal}, got {_peekToken.TokenType} instead"
+        );
 
     private LetStatement? ParseLetStatement()
     {
@@ -332,7 +335,7 @@ public class MonkeyParser
         };
     }
 
-    private List<Identifier>? ParseFunctionParameters() // starts on { character 
+    private List<Identifier>? ParseFunctionParameters() // starts on { character
     {
         if (_peekToken == TokenType.RPAREN)
         {
@@ -342,10 +345,7 @@ public class MonkeyParser
 
         NextToken();
 
-        var parameters = new List<Identifier>
-        {
-            new Identifier(_currentToken)
-        };
+        var parameters = new List<Identifier> { new Identifier(_currentToken) };
 
         while (_peekToken == TokenType.COMMA)
         {
@@ -379,9 +379,7 @@ public class MonkeyParser
         }
 
         NextToken();
-        var args = new List<IExpression>(){
-            ParseExpression(Precedence.LOWEST)
-        };
+        var args = new List<IExpression>() { ParseExpression(Precedence.LOWEST) };
 
         while (_peekToken == TokenType.COMMA)
         {
@@ -395,6 +393,7 @@ public class MonkeyParser
 
         return args;
     }
+
     private Precedence PeekPrecedence() =>
         Precedences.GetValueOrDefault(_peekToken.TokenType, Precedence.LOWEST);
 
